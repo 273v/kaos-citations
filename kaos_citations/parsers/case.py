@@ -34,6 +34,7 @@ from kaos_citations.data._loaders import (
     court_id_by_citation_string,
     load_reporters,
     reporter_all_spellings,
+    reporter_canonical_set,
     reporter_variations,
 )
 from kaos_citations.matchers import (
@@ -54,10 +55,22 @@ from kaos_citations.model import (
 # Reporter detection — Aho-Corasick over vendored reporters_db
 # ---------------------------------------------------------------------------
 
+# Minimum spelling length at which we accept a case-insensitive match.
+# Set conservatively — many reporters are 1-3 chars (``P``, ``P.``,
+# ``F.``, ``WL``, ``NV``, ``OK``, ``US``, ...) and case-folding those
+# would match in any prose. The 4-char threshold keeps unique
+# multi-token reporters like ``Fed. Cl.`` / ``F. Supp.`` / ``S. Ct.`` /
+# ``L. Ed.`` recoverable from PDF OCR / Tesseract output where one or
+# more letters have dropped case (``Fed. cl.``, ``F. supp.``), while
+# refusing to widen the matcher into territory where coincidence
+# becomes plausible.
+_REPORTER_CASE_FOLD_MIN_LEN = 4
+
 
 @lru_cache(maxsize=1)
-def _reporter_matcher():  # type: ignore[no-untyped-def]
-    """MultiPatternMatcher over every reporter spelling.
+def _reporter_matcher_strict():  # type: ignore[no-untyped-def]
+    """Case-sensitive Aho-Corasick over every canonical + variation
+    reporter spelling.
 
     longest_match=True so ``F. Supp. 2d`` wins over ``F. Supp.``.
     """
@@ -67,9 +80,104 @@ def _reporter_matcher():  # type: ignore[no-untyped-def]
     return multi_pattern(spellings, longest_match=True)
 
 
+@lru_cache(maxsize=1)
+def _reporter_matcher_lenient():  # type: ignore[no-untyped-def]
+    """Case-insensitive Aho-Corasick over reporter spellings ≥
+    ``_REPORTER_CASE_FOLD_MIN_LEN`` chars. Only used as a fallback for
+    spans the strict matcher missed (see ``_find_reporter_hits``).
+
+    The length cutoff is the design pivot: a case-insensitive match on
+    a single-letter pattern like ``P`` would fire in any sentence; a
+    match on ``Fed. Cl.`` requires that exact 8-char shape (modulo
+    case) which essentially never appears outside a citation.
+    """
+    spellings = sorted(
+        (s for s in reporter_all_spellings() if len(s) >= _REPORTER_CASE_FOLD_MIN_LEN),
+        key=len,
+        reverse=True,
+    )
+    return multi_pattern(cast("list[str]", spellings), longest_match=True, case_insensitive=True)
+
+
+def _find_reporter_hits(text: str):  # type: ignore[no-untyped-def]
+    """Run both matchers and merge — longest match wins on overlaps.
+
+    The strict matcher catches every well-cased canonical reporter
+    spelling. The lenient case-insensitive matcher (≥4-char patterns
+    only) picks up OCR-degraded forms — ``Fed. cl.`` for ``Fed. Cl.``,
+    ``F. supp.`` for ``F. Supp.``. Both matchers can fire at
+    overlapping positions: a strict ``Fed.`` (4 chars) at position
+    3..7 vs a lenient ``Fed. cl.`` (8 chars) at 3..11.
+
+    Resolution rule: the longer span wins. The strict matcher's
+    short-prefix hit is discarded in favor of the lenient matcher's
+    full-form hit when both anchor at the same start and the lenient
+    one extends further. This recovers the OCR-degraded reporter
+    without admitting bare-letter false positives (which the lenient
+    matcher's 4-char minimum already excludes).
+    """
+    strict = list(_reporter_matcher_strict().find_all(text))
+    lenient = list(_reporter_matcher_lenient().find_all(text))
+    if not lenient:
+        strict.sort(key=lambda h: h.start)
+        return strict
+    if not strict:
+        return lenient
+
+    merged = strict + lenient
+    # Sort by start ascending, length descending — so when iterating,
+    # at any given start position we see the longest hit first.
+    merged.sort(key=lambda h: (h.start, -(h.end - h.start)))
+
+    out: list = []
+    last_end = -1
+    for h in merged:
+        if h.start < last_end:
+            # Overlaps a previously-kept (longer-or-equal) hit — drop.
+            continue
+        out.append(h)
+        last_end = h.end
+    return out
+
+
+@lru_cache(maxsize=1)
+def _reporter_canonical_lookup() -> dict[str, str]:
+    """Lowercase-keyed lookup mapping each spelling (and its case-folded
+    form) to a canonical Bluebook reporter abbreviation.
+
+    Built once and cached. Populated from ``reporter_variations`` plus
+    the canonical-set itself; canonical wins when both a canonical and
+    a variation share the same case-folded key. Used by
+    ``_normalize_reporter`` to resolve OCR-degraded forms back to
+    their canonical reporter.
+    """
+    out: dict[str, str] = {}
+    # Canonical spellings map to themselves — they take precedence over
+    # variation rewrites, so add them first.
+    for canonical in reporter_canonical_set():
+        out.setdefault(canonical.lower(), canonical)
+    # Variation rewrites: only fill in lowercase keys not already
+    # claimed by a canonical spelling.
+    for variant, canonical in reporter_variations().items():
+        out.setdefault(variant.lower(), canonical or variant)
+    return out
+
+
 def _normalize_reporter(spelling: str) -> str:
-    """Map a matched spelling to its canonical Bluebook form."""
-    return reporter_variations().get(spelling, spelling)
+    """Map a matched spelling to its canonical Bluebook form.
+
+    Order:
+      1. Direct ``reporter_variations`` lookup (variant → canonical).
+      2. Identity if the spelling is already canonical.
+      3. Case-folded fallback for OCR-degraded forms (``Fed. cl.`` →
+         ``Fed. Cl.``).
+    """
+    direct = reporter_variations().get(spelling)
+    if direct is not None:
+        return direct
+    if spelling in reporter_canonical_set():
+        return spelling
+    return _reporter_canonical_lookup().get(spelling.lower(), spelling)
 
 
 def _reporter_court_codes(canonical_reporter: str) -> tuple[str, ...]:
@@ -115,9 +223,16 @@ def _scotus_court_default(canonical_reporter: str) -> str | None:
 # Rust regex: ``\A`` start-of-input, ``\z`` end-of-input (lowercase).
 _VOLUME_TAIL_PATTERN = r"(?P<vol>\d{1,4})\s+\z"
 # Page: digits immediately following the reporter (with optional ws).
-_PAGE_HEAD_PATTERN = r"\A\s+(?P<page>\d{1,5})"
-# Pin cite (single page or page-range or comma-list of pages).
-_PIN_HEAD_PATTERN = r"\A\s*,\s*(?P<pin>\d{1,5}(?:-\d{1,5})?(?:,\s*\d{1,5})*|\*\d+)"
+# Cap is 8 digits to accommodate Westlaw cites (``2013 WL 3958350`` —
+# 7 digits) and LEXIS cites of similar magnitude. The earlier 5-digit
+# bound was calibrated against Bluebook reporters where pages rarely
+# exceed 5 digits; expanding to 8 keeps every conventional reporter
+# happy while admitting Westlaw / LEXIS / star-paginated services.
+_PAGE_HEAD_PATTERN = r"\A\s+(?P<page>\d{1,8})"
+# Pin cite (single page or page-range or comma-list of pages). Same
+# 8-digit bound as ``_PAGE_HEAD_PATTERN`` — pin cites can run as long
+# as page numbers in Westlaw / LEXIS cites.
+_PIN_HEAD_PATTERN = r"\A\s*,\s*(?P<pin>\d{1,8}(?:-\d{1,8})?(?:,\s*\d{1,8})*|\*\d+)"
 # Parenthetical: balanced ``(...)`` capturing the inner text.
 _PAREN_HEAD_PATTERN = r"\A\s*\((?P<inner>[^)]+)\)"
 # Year inside a parenthetical (4-digit 1600-2200).
@@ -301,7 +416,7 @@ def _find_page_after(text: str, pos: int) -> tuple[int, int] | None:
 def _find_anchors(text: str) -> list[_Anchor]:
     """Phase 1+2: find every <volume> <reporter> <page> anchor."""
     anchors: list[_Anchor] = []
-    for hit in _reporter_matcher().find_all(text):
+    for hit in _find_reporter_hits(text):
         rep_start, rep_end = hit.start, hit.end
         raw_reporter = text[rep_start:rep_end]
         canonical = _normalize_reporter(raw_reporter)

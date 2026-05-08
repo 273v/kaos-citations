@@ -331,3 +331,119 @@ class TestIntroVerbBoundary:
         cites = extract_case_citations(text)
         assert len(cites) == 1
         assert cites[0].case_name == "Brown v. Board of Education"
+
+
+@pytest.mark.unit
+class TestWestlawAndLEXISPages:
+    """Lock in 0.1.0a2 fix: Westlaw / LEXIS cites use 7-8 digit page
+    numbers; the prior 5-digit page bound truncated them silently
+    (``2013 WL 3958350`` → ``page=39583``)."""
+
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            (
+                "See Foo v. Bar, 2013 WL 3958350, at *3 (Fed. Cl. July 31, 2013).",
+                {"volume": 2013, "reporter": "WL", "page": 3958350},
+            ),
+            (
+                "Citing Jackson v. State, 2018 WL 4173192 (Nev. App. 2018).",
+                {"volume": 2018, "reporter": "WL", "page": 4173192},
+            ),
+            (
+                "See also Smith, 2021 WL 6773089, at *2 (D. Nev. 2021).",
+                {"volume": 2021, "reporter": "WL", "page": 6773089},
+            ),
+        ],
+    )
+    def test_westlaw_full_page_number_preserved(
+        self, text: str, expected: dict[str, object]
+    ) -> None:
+        from kaos_citations.parsers.case import extract_case_citations
+
+        cites = extract_case_citations(text)
+        assert len(cites) == 1
+        c = cites[0]
+        assert c.volume == expected["volume"]
+        assert c.reporter == expected["reporter"]
+        assert c.page == expected["page"]
+
+    def test_six_digit_pin_cite_preserved(self) -> None:
+        """Pin cites can also run 6+ digits in Westlaw / LEXIS — same
+        bound as the page anchor."""
+        from kaos_citations.parsers.case import extract_case_citations
+
+        text = "See Foo v. Bar, 2020 WL 1234567, at *2 (Fed. Cir. 2020)."
+        cites = extract_case_citations(text)
+        assert len(cites) == 1
+        assert cites[0].page == 1234567
+
+
+@pytest.mark.unit
+class TestOCRDegradedReporterMatching:
+    """Lock in 0.1.0a2 fix: PDF OCR commonly drops case on the second
+    or later token of a multi-word reporter (``Fed. Cl.`` → ``Fed.
+    cl.``, ``F. Supp.`` → ``F. supp.``). Case-insensitive fallback over
+    spellings ≥4 chars recovers the canonical reporter without
+    admitting bare-letter false positives.
+    """
+
+    def test_lowercase_fed_cl_recovered_to_canonical(self) -> None:
+        from kaos_citations.parsers.case import extract_case_citations
+
+        text = "See Faulkner v. United States, 43 Fed. cl. 84, 86 (1998)."
+        cites = extract_case_citations(text)
+        assert len(cites) == 1
+        c = cites[0]
+        assert c.volume == 43
+        # Normalized to the canonical Bluebook form.
+        assert c.reporter == "Fed. Cl."
+        assert c.page == 84
+
+    def test_lowercase_f_supp_2d_recovered_to_canonical(self) -> None:
+        from kaos_citations.parsers.case import extract_case_citations
+
+        text = "See Big v. Co., 200 F. supp. 2d 100 (S.D.N.Y. 2002)."
+        cites = extract_case_citations(text)
+        assert len(cites) == 1
+        c = cites[0]
+        assert c.volume == 200
+        assert c.reporter == "F. Supp. 2d"
+        assert c.page == 100
+
+    def test_mixed_canonical_and_ocr_degraded_in_string_cite(self) -> None:
+        """A passage with one canonical and one OCR-degraded reporter
+        should yield both citations cleanly."""
+        from kaos_citations.parsers.case import extract_case_citations
+
+        text = "See Smith, 100 F.3d 1 (5th Cir. 2000) and Jones, 50 Fed. cl. 100 (2001)."
+        cites = extract_case_citations(text)
+        assert len(cites) == 2
+        assert cites[0].reporter == "F.3d"
+        assert cites[1].reporter == "Fed. Cl."
+
+    def test_short_reporter_not_case_folded(self) -> None:
+        """Sub-4-char spellings (``P.``, ``F.``, ``WL``) MUST stay
+        case-sensitive — case-folding them would match in any prose.
+        The 4-char threshold is the design pivot.
+        """
+        from kaos_citations.parsers.case import extract_case_citations
+
+        # Bare lowercase 'p.' in normal prose must NOT match.
+        cites = extract_case_citations(
+            "The plaintiff alleges that p. matters, but Fed. context is absent."
+        )
+        assert cites == []
+
+    def test_lowercase_us_reporter_recovered(self) -> None:
+        """``U.S.`` is exactly 4 chars — the threshold edge. Case-fold
+        is allowed here because a lowercase ``u.s.`` between digits
+        and a page number is always a citation, never coincidence."""
+        from kaos_citations.parsers.case import extract_case_citations
+
+        text = "See foo v. bar, 100 u.s. 200 (1900)."
+        cites = extract_case_citations(text)
+        assert len(cites) == 1
+        assert cites[0].reporter == "U.S."
+        assert cites[0].volume == 100
+        assert cites[0].page == 200

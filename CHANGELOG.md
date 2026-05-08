@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0a2] — 2026-05-07
+
+Second public alpha — recall fixes uncovered by a 16-document
+real-PDF benchmark sweep against eyecite (court orders, FDA guidance,
+GAO / GPO reports, SEC 10-Ks, EPA rulemaking, contracts, patents;
+554 KB of real text). Previously we matched eyecite on 16/16 cases
+in the synthetic SCOTUS fixture; on the wider corpus we missed 5
+cases out of 41 (87% recall). This release closes both root causes.
+
+### Fixed
+
+- **Westlaw / LEXIS page numbers truncated at 5 digits.** Real
+  Westlaw cites use 7-digit page numbers (``2013 WL 3958350``); the
+  prior ``\d{1,5}`` page-anchor pattern silently truncated to 5 digits
+  (``page=39583``), causing the resulting ``(volume, reporter, page)``
+  tuple to disagree with eyecite. The ``_PAGE_HEAD_PATTERN`` and
+  ``_PIN_HEAD_PATTERN`` integer caps are now ``\d{1,8}`` — accommodates
+  Westlaw, LEXIS, and star-paginated services without affecting any
+  conventional reporter (whose page numbers fit in 5 digits anyway).
+  Three regression tests in ``TestWestlawAndLEXISPages`` lock the fix.
+
+- **OCR-degraded reporter spellings rejected.** PDF text extraction
+  (Tesseract / pypdfium2) commonly drops the case of one or more
+  letters in multi-token reporters: ``Fed. Cl.`` → ``Fed. cl.``,
+  ``F. Supp. 2d`` → ``F. supp. 2d``. The strict case-sensitive
+  Aho-Corasick matcher rejected these, leaving the cite unrecognised.
+  A second case-insensitive matcher now runs over reporter spellings
+  ≥ 4 characters; results merge with the strict matcher's hits via
+  longest-span-wins. Resolves OCR-degraded forms back to the
+  canonical Bluebook spelling (``Fed. Cl.``). The 4-char threshold
+  prevents bare-letter reporters (``P.``, ``F.``, ``WL``) from
+  firing in unrelated prose. Five regression tests in
+  ``TestOCRDegradedReporterMatching`` lock the fix and the
+  false-positive guard.
+
+### Notes
+
+- Cross-validation against eyecite on the same 16-document corpus now
+  shows kaos-citations finding **48 cases vs eyecite's 41** — net +7
+  on coverage, driven by the lenient OCR-tolerance fix recovering
+  cases eyecite did NOT find (the inverse of what we expected:
+  eyecite's looser internal matching caught 5 OCR-degraded cites we
+  initially missed; now we catch them too plus a category eyecite
+  misses entirely).
+- Speed unchanged on the SCOTUS fixture (~3.5 ms / 1918 chars); the
+  added matcher pass adds ≤ 5% wall-clock on real-doc workloads.
+- 498 unit tests, ruff format / ruff check / ty check all green.
+
 ## [0.1.0a1] — 2026-05-07
 
 First public alpha release.
