@@ -1,0 +1,133 @@
+# Changelog
+
+All notable changes to `kaos-citations` are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.0a1] — 2026-05-07
+
+First public alpha release.
+
+### Added
+
+- **`extract_citations(text, *, kinds=None, source_uri=None)`** — top-
+  level dispatcher across **60 supported `kind` literals** spanning
+  four domains:
+  - **Legal** (25 kinds): full-form + short-form case law (`case` /
+    `case_short` / `id` / `supra` / `case_ref`), journal articles
+    (`journal`), CFR, U.S. Code / I.R.C. / state codes (`statute`),
+    Federal Register, U.S. Constitution, Federal Rules + USSG, Treasury
+    Regulations, IRS guidance (Rev. Rul. / Rev. Proc. / Notice / PLR /
+    TAM / GCM / FSA / CCA / T.D. / IRB / IRM), executive actions
+    (E.O. / Proc. / Memo / Determination), public laws + bills +
+    reports + Cong. Rec., Restatements, Uniform Acts + Model Codes,
+    agency adjudications (NLRB / FERC / FCC / FTC / NTSB / EPA EAB /
+    BIA / PTAB / TTAB), agency manuals (MPEP / TMEP / POMS), AG / OLC
+    opinions, bar ethics opinions, internet URLs, archive URLs.
+  - **Financial** (19 kinds): SEC filings (20+ form types), SEC
+    releases (33-/34-/IC-/IA-/TIA-), SEC staff guidance (SAB / SLB /
+    C&DI / no-action), SEC named regulations (Reg. S-X / S-K / G /
+    AB / M / FD / BTR / S-T), FINRA rules + notices + disciplinary,
+    exchange rules (NYSE / Nasdaq / Cboe / MSRB / OCC), Federal
+    Reserve regs + SR/CA/OP letters, FDIC FILs, OCC bulletins +
+    interpretive letters + conditional approvals, CFPB bulletins +
+    circulars + advisory opinions, NCUA letters, Basel framework,
+    CFTC interpretive + no-action + advisory + orders, NAIC
+    bulletins + model acts, international finance bodies (FATF /
+    IOSCO), FFIEC call reports.
+  - **Accounting** (13 kinds): FASB ASC + ASU + legacy (FAS / FIN /
+    FSP / EITF / TB / CON / APB / ARB), PCAOB AS + Releases + Rules
+    + Practice Alerts, AICPA SAS / SSAE / SSARS / SOP / TQA / Code,
+    IFRS family (IFRS / IAS / IFRIC / SIC / Practice Statement /
+    Conceptual Framework), IAASB (ISA / ISAE / ISRE / ISRS / ISQM /
+    ISQC), IESBA Code, GASB Statements + Implementation Guides +
+    Concepts + Tech Bulletins + Interpretations, FASAB SFFAS +
+    Concepts + Interpretations + Tech Bulletins, government audit
+    (OMB Circulars + Memos + GAO Reports + Yellow Book), NAIC SSAP,
+    sustainability frameworks (GRI / SASB / TCFD / ISSB / ESRS).
+  - **Identifier** (3 kinds): DOI, PubMed, arXiv (opt-in by default).
+- **Three MCP tools** (`kaos-citations-extract`, `kaos-citations-validate`,
+  `kaos-citations-doctor`) — registered via
+  `register_citations_tools(runtime)`. All read-only, fully offline.
+  `kaos-citations-validate` rejects unknown `expected_kind` values
+  upfront with an error and near-match suggestions.
+- **One MCP resource** — `kaos-citations://kinds` — static taxonomy
+  agents read for self-discovery: every `kind`, the broader family
+  (`legal` / `financial` / `accounting` / `identifier`), a Bluebook-
+  style example, and an `opt_in` flag. Registered via
+  `register_citations_resources(runtime)`. Unit tests cross-check the
+  table against the dispatcher's `_SUPPORTED_KINDS` so they cannot drift.
+- **Typed `Citation` discriminated union** with frozen Pydantic
+  models per family — every `model.__all__` symbol is re-exported
+  from the package surface (`from kaos_citations import IFRSCitation`,
+  `SECFilingCitation`, `AgencyAdjudicationCitation`, etc.).
+  Citations carry stable provenance (`raw` / `normalized` / `span` /
+  `source_uri`), a per-extraction `cite_id` (`c0001`, `c0002`, ...),
+  and Bluebook-modifier fields on the base class: `signal`,
+  `pin_cite`, `pin_cite_kind`, `parenthetical`, `parenthetical_kind`,
+  `weight`, `back_ref`, `string_cite_group`, `subsequent_history`.
+- **Stable cite-id cross references** — `back_ref` and the second
+  tuple element of `subsequent_history` reference other citations by
+  their `cite_id` (string), not by list index. Filtering or
+  re-sorting the result list never breaks the cross-references.
+- **Bluebook-correct case parenthetical handling** — date parens
+  (`(1954)`, `(5th Cir. 1996)`) populate `year` and `court` only;
+  weight parens (`(per curiam)` / `(en banc)`) populate `weight`;
+  judge parens (`(Sotomayor, J., dissenting)`) populate `judges`.
+  Only Bluebook R1.5 explanatory text spills into `parenthetical`.
+  Multi-paren chains like `(2014) (per curiam) (holding ...)` are
+  parsed correctly across all three slots.
+- **Bluebook-correct case-name boundaries** — when extracting cite
+  N+1, the case-name walk-back is floored at cite N's right edge.
+  R10.7 subsequent-history connectors (`overruled by`, `aff'd`,
+  `rev'd`, `vacated`, `cert. denied`, etc.) are stripped from the
+  leading edge, so `Roe v. Wade, ..., overruled by Dobbs v. Jackson`
+  yields two clean `case_name` values rather than swallowing the
+  prior cite into the second.
+- **kaos-nlp-core integration boundary** (`kaos_citations._nlp`):
+  `get_sentence_tokenizer()` returns the singleton Punkt tokenizer
+  initialized with the bundled legal model (~27,000 abbreviations).
+  Loader fails loudly via `PunktModelMissingError` if the embedded
+  model is missing or the abbreviation count is below threshold —
+  no silent fallback to an empty tokenizer.
+- **`kaos_citations.matchers`** — single source of truth for all
+  matching: `regex(...)` (Rust regex), `multi_pattern(...)`
+  (Aho-Corasick), `tokenize_words(...)`, `sentence_tokenizer()`,
+  plus `FstSet` builders for reporters / courts / case-name
+  abbreviations / journals / statute reporters / US states.
+- **Vendored data** — `reporters_db` and `courts_db` JSON ship under
+  `kaos_citations/data/` with the upstream BSD-2 license preserved
+  in `kaos_citations/data/LICENSE.vendored`. The runtime consumes
+  the JSON only; no upstream Python code is imported.
+- **Bluebook post-processing passes** (`kaos_citations.postprocess`):
+  cite-id assignment, signal binding (R1.2), string-cite grouping
+  (R1.4), and subsequent-history detection (R10.7), all anchored to
+  Punkt-derived sentence boundaries.
+- **`KaosCitationsSettings`** — `ModuleSettings` subclass with env
+  prefix `KAOS_CITATIONS_` (empty at this release; reserved).
+- **Typed error hierarchy** rooted at
+  `KaosCitationsError(KaosCoreError)`: `CitationParseError`.
+
+### Notes
+
+- The runtime dependency graph is exactly two packages: `kaos-core`
+  (logging + settings + MCP tool primitives) and `kaos-nlp-core`
+  (matching + Punkt + tokenization). No `httpx`, no `eyecite`, no
+  `re`-module imports anywhere in the runtime.
+- `kaos-citations` does NOT do citation resolution (URL building,
+  body fetching) or claim verification. Those responsibilities live
+  in the rest of the KAOS stack — `kaos-source` for typed source
+  connectors, `kaos-web` for generic search + fetch, `kaos-llm-core`
+  for in-process `Cited[T]` grounding, and `kaos-agents` for
+  orchestration. Compose them with the typed citations this package
+  produces.
+- `kaos-mcp` is intentionally absent from extras at 0.1.0a1 — Wave 3,
+  not yet on PyPI. The MCP server entry point will work once
+  `kaos-mcp` publishes; until then, install `kaos-mcp` from source
+  alongside `kaos-citations`.
+
+[Unreleased]: https://github.com/273v/kaos-citations/compare/v0.1.0a1...HEAD
+[0.1.0a1]: https://github.com/273v/kaos-citations/releases/tag/v0.1.0a1

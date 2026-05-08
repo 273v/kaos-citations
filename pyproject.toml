@@ -1,0 +1,156 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kaos-citations"
+dynamic = ["version"]
+description = "Structured, high-performance citation identification and extraction. Text in, typed Pydantic Citation records out with provenance + Bluebook modifiers. 60 kinds across legal, financial, accounting, and identifier domains. Pure-Python, fully offline, deterministic, Rust-backed matching."
+readme = "README.md"
+requires-python = ">=3.13"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [
+  { name = "273 Ventures LLC", email = "it@273ventures.com" },
+]
+maintainers = [
+  { name = "Michael Bommarito", email = "mike@273ventures.com" },
+]
+keywords = [
+  "accounting",
+  "agentic",
+  "case-law",
+  "cfr",
+  "citation-extraction",
+  "citations",
+  "extraction",
+  "financial",
+  "kaos",
+  "legal-tech",
+  "mcp",
+  "model-context-protocol",
+  "nlp",
+  "regulations",
+  "sec",
+  "structured-extraction",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Legal Industry",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Text Processing :: Linguistic",
+  "Typing :: Typed",
+]
+dependencies = [
+  # kaos-core provides logging (``get_logger``), settings
+  # (``ModuleSettings``), error base class (``KaosCoreError``), and the
+  # MCP tool primitives (``KaosTool``, ``ToolResult``, ``ToolMetadata``,
+  # ``ParameterSchema``). It transitively depends on pydantic + pydantic-
+  # settings, so we don't redeclare those.
+  "kaos-core>=0.1.0a4,<0.2",
+  # kaos-nlp-core provides every matcher
+  # (RegexMatcher / RegexSetMatcher / MultiPatternMatcher / FstSet),
+  # the Punkt sentence tokenizer with the bundled legal model
+  # (~27,000 abbreviations), and the word tokenizer used for
+  # case-name parsing. All citation extraction in kaos-citations
+  # routes through these primitives — no Python ``re`` module, no
+  # third-party tokenizer.
+  "kaos-nlp-core>=0.1.0a1,<0.2",
+]
+
+[project.optional-dependencies]
+# Reserved for future expansion. The vendored reporters_db /
+# courts_db JSON data ships in ``kaos_citations/data/`` under BSD-2
+# attribution (see ``kaos_citations/data/LICENSE.vendored``).
+legal = []
+# Note: the [mcp] extra (kaos-mcp>=0.1.0) is intentionally absent at
+# 0.1.0a1. kaos-mcp ships in Wave 3 and is not on PyPI yet; ``uv lock``
+# is strict and refuses unresolvable extras.
+
+[dependency-groups]
+dev = [
+  # eyecite + reporters-db + courts-db are dev-only:
+  # eyecite is used by the benchmark cross-validation
+  # (tests/benchmarks/test_corpus_benchmark.py); reporters-db and
+  # courts-db are kept for the refresh-vendored-data scripts that
+  # pull the latest upstream JSON before each release. None are
+  # runtime deps.
+  "eyecite>=2.7.6",
+  "reporters-db>=3.2.53",
+  "courts-db>=0.10.9",
+  "pytest>=8.3.5",
+  "pytest-asyncio>=0.26.0",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.11.0",
+  "ty>=0.0.1a17",
+]
+
+[project.scripts]
+kaos-citations-serve = "kaos_citations.serve:main"
+
+[project.urls]
+Homepage = "https://kelvin.legal"
+Documentation = "https://docs.kelvin.legal"
+Repository = "https://github.com/273v/kaos-citations"
+Issues = "https://github.com/273v/kaos-citations/issues"
+Changelog = "https://github.com/273v/kaos-citations/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+path = "kaos_citations/_version.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/kaos_citations",
+  "/README.md",
+  "/LICENSE",
+  "/NOTICE",
+  "/CHANGELOG.md",
+  "/CLAUDE.md",
+  "/tests",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["kaos_citations"]
+
+[tool.hatch.build.targets.wheel.force-include]
+# Vendored JSON data + license — must be in the wheel for runtime
+# loaders (kaos_citations.data._loaders) to find via importlib.resources.
+"kaos_citations/data/case_name_abbreviations.json" = "kaos_citations/data/case_name_abbreviations.json"
+"kaos_citations/data/courts.json" = "kaos_citations/data/courts.json"
+"kaos_citations/data/courts_states.json" = "kaos_citations/data/courts_states.json"
+"kaos_citations/data/courts_variables.json" = "kaos_citations/data/courts_variables.json"
+"kaos_citations/data/journals.json" = "kaos_citations/data/journals.json"
+"kaos_citations/data/laws.json" = "kaos_citations/data/laws.json"
+"kaos_citations/data/regexes.json" = "kaos_citations/data/regexes.json"
+"kaos_citations/data/reporters.json" = "kaos_citations/data/reporters.json"
+"kaos_citations/data/state_abbreviations.json" = "kaos_citations/data/state_abbreviations.json"
+"kaos_citations/data/LICENSE.vendored" = "kaos_citations/data/LICENSE.vendored"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+  "unit: unit tests (no external services)",
+  "integration: integration tests (may touch network)",
+  "live: live tests against real APIs (require API keys)",
+]
+addopts = ["--strict-markers"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "C4", "PTH"]
+
+[tool.ty.src]
+include = ["kaos_citations", "tests"]
+
+[tool.uv]
+package = true

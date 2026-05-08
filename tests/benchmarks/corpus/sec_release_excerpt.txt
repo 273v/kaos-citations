@@ -1,0 +1,18 @@
+Excerpt mimicking a public-domain SEC rulemaking release. Tests SEC
+release / staff-guidance / regulation / FINRA / banking / IFRS surface.
+
+The Commission is adopting amendments to Regulation S-K. See Securities Act Release No. 33-10777; Exchange Act Release No. 34-94168, 87 Fed. Reg. 8019 (Feb. 11, 2022). The amendments respond to Investment Company Act Release No. IC-34123 and Investment Advisers Act Release No. IA-6500.
+
+Registrants must include the disclosure in their Annual Report (Form 10-K) and quarterly filings (Form 10-Q). Material agreements must be reported on Form 8-K (Item 1.01). Beneficial ownership over five percent triggers Schedule 13D filing. Investment advisers register on Form ADV (Mar. 31, 2024).
+
+Existing staff guidance remains operative. See Staff Accounting Bulletin No. 121 (Mar. 31, 2022); Staff Legal Bulletin No. 14L (Nov. 3, 2021); C&DI Question 234.01. The Commission previously addressed similar issues in an SEC No-Action Letter to Acme Corp.
+
+For broker-dealers, FINRA Rule 2111(a) governs suitability obligations. See FINRA Regulatory Notice 23-12 (Apr. 2023). Disciplinary actions are taken under FINRA Disciplinary Proceeding No. 2020012345601 (NAC). MSRB Rule G-15 covers municipal securities, while NYSE Rule 123 and Nasdaq Rule 5605(d) govern listing standards.
+
+Banking organizations must comply with Reg. Z, 12 C.F.R. pt. 226. Recent supervisory guidance includes SR 23-04 (Mar. 1, 2023) and FIL-12-2023. The OCC issued OCC Bulletin 2023-10 (Mar. 1, 2023). See also CFPB Compliance Bulletin 2023-01 (Apr. 1, 2023). Credit unions follow NCUA Letter to Credit Unions 23-01 (Jan. 5, 2023).
+
+International standards include BCBS d544 and FATF Recommendation 10. CFTC Interp. Ltr. 23-12 addresses similar issues for derivatives. Insurers follow NAIC Bulletin 2023-01.
+
+Treasury guidance referenced includes Rev. Rul. 2019-11; Rev. Proc. 2023-12; Treas. Reg. § 1.501(c)(3)-1(d)(2); T.D. 9930. See also Internal Revenue Manual § 4.10.7.2.
+
+Form filers should review 17 CFR 240.10b-5 and Reg. S-X § 210.1-01. Failure to comply may give rise to private actions under 15 U.S.C. § 78j(b). See Stoneridge Inv. Partners, LLC v. Scientific-Atlanta, Inc., 552 U.S. 148 (2008).

@@ -1,0 +1,184 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  # Manual fallback so a failed publish (e.g. a transient PyPI 5xx) can
+  # be retried without re-tagging.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install Python 3.13
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --group dev --python 3.13
+
+      - name: Verify version matches tag
+        id: version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION=$(uv run python -c "from kaos_citations._version import __version__; print(__version__)")
+          TAG=${GITHUB_REF_NAME#v}
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "::error::Tag '$TAG' does not match _version.py value '$VERSION'"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Pre-publish QA
+        run: |
+          uv run ruff format --check kaos_citations tests
+          uv run ruff check kaos_citations tests
+          uv run ty check kaos_citations tests
+          # Marker filter must mirror ci.yml exactly (F011). Integration
+          # tests in tests/integration/ start subprocess MCP servers and
+          # hit live APIs — neither runs cleanly in the release-job
+          # environment.
+          uv run pytest -m "not live and not network and not slow and not integration" --no-cov
+
+      - name: Build wheel + sdist
+        run: uv build
+
+      - name: Verify metadata
+        run: uvx --from twine twine check --strict dist/*
+
+      - name: Smoke-test the built wheel in a clean venv
+        run: |
+          uv venv --python 3.13 /tmp/smoke
+          uv pip install --python /tmp/smoke/bin/python dist/kaos_citations-*-py3-none-any.whl
+          /tmp/smoke/bin/python -c "
+          import kaos_citations
+          # Public API surface that the wheel must expose.
+          from kaos_citations import (
+              CFRCitation,
+              CaseCitation,
+              Citation,
+              CitationParseError,
+              ConstitutionCitation,
+              DOICitation,
+              FederalRegisterCitation,
+              IFRSCitation,
+              KaosCitationsError,
+              KaosCitationsSettings,
+              SECFilingCitation,
+              StatuteCitation,
+              apply_postprocess,
+              assign_cite_ids,
+              extract_citations,
+              register_citations_resources,
+              register_citations_tools,
+          )
+          from kaos_citations.resources import CITATION_KINDS_URI, CitationKindsResource
+          # Bulk extract — case + cfr + statute + const all fire.
+          text = (
+              'See Brown v. Bd. of Educ., 347 U.S. 483 (1954); '
+              '17 CFR 240.10b-5; 42 U.S.C. § 1983; U.S. Const. amend. I.'
+          )
+          cites = extract_citations(text)
+          kinds = sorted({c.kind for c in cites})
+          assert {'case', 'cfr', 'statute', 'const'}.issubset(set(kinds)), kinds
+          # Stable cite_id assignment.
+          assert all(c.cite_id.startswith('c') for c in cites)
+          # Bluebook paren-chain: year goes to year, not parenthetical.
+          one = extract_citations('Brown v. Bd. of Educ., 347 U.S. 483 (1954).')
+          assert len(one) == 1
+          assert one[0].year == 1954 and one[0].parenthetical is None
+          # Kinds resource resolves to the documented 60-kind taxonomy.
+          import asyncio
+          data = asyncio.run(CitationKindsResource().read())
+          assert data['count'] == 60, data['count']
+          assert data['opt_in_kinds'] == ['arxiv']
+          print(
+              f'kaos-citations {kaos_citations.__version__}: '
+              f'bulk extract green, cite_ids assigned, paren-chain correct, '
+              f\"resource serves {data['count']} kinds\"
+          )
+          "
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          retention-days: 30
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/kaos-citations
+    permissions:
+      id-token: write  # OIDC for Trusted Publishing
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: true
+          skip-existing: false
+
+  github-release:
+    name: Create GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          PRERELEASE_FLAG=""
+          if [[ "$VERSION" == *a* || "$VERSION" == *b* || "$VERSION" == *rc* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          gh release create "$GITHUB_REF_NAME" \
+            --title "kaos-citations $VERSION" \
+            --notes-from-tag \
+            $PRERELEASE_FLAG \
+            dist/*

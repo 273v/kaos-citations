@@ -1,0 +1,13 @@
+Excerpt from a public-domain Supreme Court opinion. Citation patterns
+are typical of post-1960 SCOTUS dispositions and exercise the case /
+short-form / signal / parenthetical / subsequent-history surface.
+
+In school-segregation cases, this Court held that "separate educational facilities are inherently unequal." Brown v. Board of Education, 347 U.S. 483, 495 (1954). The Court reaffirmed Brown in subsequent decisions. See Bolling v. Sharpe, 347 U.S. 497, 500 (1954); see also Cooper v. Aaron, 358 U.S. 1, 18 (1958) (per curiam). The principle was extended in Loving v. Virginia, 388 U.S. 1, 12 (1967), and Reed v. Reed, 404 U.S. 71, 75-76 (1971).
+
+But see Plessy v. Ferguson, 163 U.S. 537, 552 (1896) (Brown, J., for the Court), overruled by Brown, 347 U.S. 483. The earlier rule was inconsistent with the Fourteenth Amendment. See U.S. Const. amend. XIV, § 1. Cf. Marbury v. Madison, 5 U.S. 137, 177 (1803) ("It is emphatically the duty of the Judicial Department to say what the law is.").
+
+The federal cause of action proceeds under 42 U.S.C. § 1983 and is governed by Fed. R. Civ. P. 8(a)(2). See Ashcroft v. Iqbal, 556 U.S. 662, 678 (2009); Bell Atl. Corp. v. Twombly, 550 U.S. 544, 570 (2007). Standing requires injury in fact. See Lujan v. Defenders of Wildlife, 504 U.S. 555, 560-61 (1992).
+
+Compare Citizens United v. FEC, 558 U.S. 310, 339 (2010), with Austin v. Mich. Chamber of Commerce, 494 U.S. 652 (1990), overruled by Citizens United, 558 U.S. 310. Justice Stevens, joined by Justices Ginsburg, Breyer, and Sotomayor, dissented. Id. at 393 (Stevens, J., concurring in part and dissenting in part).
+
+Lower courts have applied this framework. See, e.g., Doe v. Roe, 100 F.3d 200, 205 (5th Cir. 1996); Smith v. Jones, 200 F.R.D. 555, 558 (E.D. Pa. 2001). The Tenth Circuit reached the same conclusion. See Adams v. Baker, 88 F. Supp. 2d 116, 127 (D. Colo. 1999), aff'd, 250 F.3d 1100 (10th Cir. 2001).

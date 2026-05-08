@@ -1,0 +1,17 @@
+Excerpt mimicking accounting-policy disclosure language found in
+public-domain SEC filings (10-K notes) and FASB / IFRS guidance. Tests
+ASC / ASU / legacy FASB / IFRS / PCAOB / AICPA / GASB surface.
+
+Revenue is recognized in accordance with FASB ASC 606-10-25-1, as amended by ASU 2023-09, Improvements to Income Tax Disclosures. Lease accounting follows FASB ASC 842-10. Goodwill is tested for impairment per FASB ASC 350-30-25-3. Income taxes are recognized under FASB ASC 740-10-25-6. Legacy guidance under FAS 142 and FIN 48 informs our application of these provisions.
+
+The Company evaluates business combinations under FASB ASC 805-10-25-1. Stock-based compensation follows FASB ASC 718. EITF Issue 02-13 and APB Op. 18 remain relevant for equity-method investments. CON 8 establishes the underlying conceptual framework.
+
+Audits are conducted in accordance with PCAOB AS 2401 and the standards of the Public Company Accounting Oversight Board. See PCAOB Release No. 2023-001; PCAOB Rule 3502; PCAOB Staff Audit Practice Alert No. 12. Auditors apply AICPA SAS 145 and AICPA SSAE 18 where applicable. The auditor's independence is governed by the AICPA Code of Pro. Conduct, ET § 1.295.
+
+For our IFRS-reporting subsidiaries, revenue is recognized under IFRS 15, with paragraph guidance in IFRS 15.31. Impairment of non-financial assets is governed by IAS 36 and IAS 36.12. Uncertain tax positions are addressed in IFRIC 23. Legacy SIC-7 still applies in limited cases. Sustainability disclosures follow IFRS S1.10 and IFRS S2.
+
+International audit standards include ISA 315 (Revised 2019) and ISAE 3000 (Revised). The IESBA Code § 290 governs ethical conduct.
+
+Government funding programs comply with GASB Statement No. 87, ¶ 12 and FASAB SFFAS 56. Federal grants are audited under OMB Circular A-133 and the GAO Yellow Book (2018 Rev.). Insurance subsidiaries follow NAIC SSAP No. 5R, Liabilities, Contingencies and Impairments.
+
+ESG reporting maps to GRI 305: Emissions 2016, SASB FB-FR-110a.1, and TCFD Recommended Disclosures (June 2017). European subsidiaries follow ESRS 2.

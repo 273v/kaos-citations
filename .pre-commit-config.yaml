@@ -1,0 +1,78 @@
+# Pre-commit hooks for kaos-citations.
+#
+# Install:
+#   uvx pre-commit install
+#
+# Run on every commit (automatic after install) or manually on the whole tree:
+#   uvx pre-commit run --all-files
+#
+# Hook versions are pinned for reproducibility. The CI workflow runs the same
+# checks (ruff format/check, ty check, pytest) so local hooks just shorten the
+# feedback loop — they are not a substitute for CI.
+
+repos:
+  # ───────────── general hygiene ─────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Email / forensic fixtures (Enron, GOVCERT-LU, SpamScope, ASF
+      # mbox) carry the original line endings, trailing whitespace, and
+      # missing final newlines from the wire — touching them would
+      # invalidate the parser regression tests. Excluded from the
+      # whitespace-fixing hooks; license + sample-binary files
+      # similarly excluded.
+      - id: trailing-whitespace
+        exclude: |
+          (?x)^(
+            LICENSE
+            |tests/fixtures/.*
+          )$
+      - id: end-of-file-fixer
+        exclude: |
+          (?x)^(
+            LICENSE
+            |tests/fixtures/.*
+          )$
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        # Free Law Project's reporters_db / courts_db JSON ships
+        # vendored under kaos_citations/data/ (BSD-2). courts.json
+        # (~1.9 MB) and reporters.json (~890 KB) exceed the default
+        # 500 KB cap; raise the cap to 2 MB so they pass while still
+        # catching accidental binaries everywhere else.
+        args: [--maxkb=2048]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: ^tests/fixtures/.*$
+      - id: detect-private-key
+        exclude: ^tests/fixtures/.*$
+
+  # ───────────── ruff (format + lint) ─────────────
+  # Pinned to match the dev group in pyproject.toml to avoid drift between
+  # local hooks and `uv sync --group dev`.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.7
+    hooks:
+      - id: ruff-format
+        files: ^(kaos_citations|tests|benchmarks)/.*\.py$
+      - id: ruff-check
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^(kaos_citations|tests|benchmarks)/.*\.py$
+
+  # ───────────── ty (type check) ─────────────
+  # Astral's ty is still pre-1.0 and does not ship an official pre-commit hook
+  # yet. Run via `uv run` so the locked dev-group version (matching CI) is
+  # used. `pass_filenames: false` because ty works on the project, not on
+  # individual files.
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty check
+        entry: uv run ty check kaos_citations tests
+        language: system
+        types: [python]
+        pass_filenames: false
+        require_serial: true

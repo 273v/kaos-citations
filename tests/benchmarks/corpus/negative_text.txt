@@ -1,0 +1,18 @@
+Negative-corpus fixture: ordinary English prose with NO legal citations.
+A high-quality citation extractor should produce zero (or near-zero)
+matches across the entire kaos-citations supported family set.
+
+Source: paraphrased from a non-legal Wikipedia article about a topic
+unrelated to law, finance, or accounting (mountain ecology). All
+identifiers, numbers, and dates are real-world but appear in
+ordinary-language context — not as citations.
+
+The alpine zone above the treeline supports a distinct community of plants and animals. Above 3,500 meters elevation, only the hardiest species survive. Grasses such as fescue and sedge cover the rolling tundra meadows, while wildflowers like alpine forget-me-not and dwarf clover thrive in the brief summer growing season, which lasts perhaps 60 to 75 days at most.
+
+Mammals include the pika, marmot, and bighorn sheep. The pika is a small relative of the rabbit; it does not hibernate but instead caches grasses in haypiles during summer. Marmots, by contrast, hibernate for up to eight months. Both species are sensitive to warming temperatures, and recent surveys conducted in 2014, 2018, and 2023 show that pika populations have retreated upslope by 145 meters on average.
+
+Birds of the alpine zone include the white-tailed ptarmigan, the brown-capped rosy finch, and the American pipit. These species nest above 3,200 meters in summer and migrate to lower elevations in winter. Bird counts conducted by the Audubon Society between 1995 and 2020 show stable populations of pipits but declining ptarmigan numbers in some ranges.
+
+The geology of the alpine zone is dominated by glacial features: cirques, aretes, hanging valleys, and tarns. Many of these features formed during the Pleistocene, between approximately 2.6 million and 11,700 years before present. The Last Glacial Maximum, around 21,000 years ago, marked the most recent extensive ice cover.
+
+Hiking trails through the alpine zone require careful management to prevent erosion and protect fragile vegetation. The Continental Divide Trail, which traverses many alpine sections, is approximately 3,100 miles long. Visitor surveys indicate that approximately 250,000 people hike portions of the trail each year, with peak use in July and August.
