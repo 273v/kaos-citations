@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [0.1.0a3] — 2026-05-16
+
+### Added
+
+- **PEP 561 `py.typed` marker** so downstream consumers using `ty` /
+  `mypy` / `pyright` pick up `kaos_citations`'s inline type
+  annotations directly from the installed wheel.
+
 ### Security
 
 - **bandit + vulture now run in both pre-commit and CI.** The
@@ -19,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   callbacks / signal handlers / OAuth field names that vulture
   can't infer from the import graph alone. Both hooks currently
   pass clean. Mirrors the rollout pattern from kaos-core.
+
 ### Changed
 
 - **uv.lock is now tracked in git.** Previously gitignored at v0.1.0a1
@@ -30,6 +40,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sibling-version bumps as PRs, and makes the supply-chain pin set
   publicly auditable. Mirrors the org-wide convention being adopted
   across all 16 kaos-* repos.
+
+### Infrastructure
+
+- Public-PR CI workflows hardened with pinned action SHAs.
+- Dependabot migrated to the uv ecosystem with a 72-hour cooldown
+  matching the rest of the kaos-* org.
+- CycloneDX SBOM ships as a release asset (F8).
+- CODEOWNERS expansion + Dependabot + OpenSSF Scorecard rollup.
+- macOS-arm64 + Windows-x64 test legs added to the CI matrix.
+
+### Documentation
+
+- Fixture provenance README backfilled (audit-03 D9).
+
 
 ## [0.1.0a2] — 2026-05-07
 
