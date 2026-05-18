@@ -1,0 +1,116 @@
+name: build
+
+# Standard `build` lane (per
+# kaos-modules/docs/oss/40-ci-cd/runner-cost-reduction-plan.md):
+# build wheel/sdist, `twine check --strict`, clean-venv smoke install.
+# Linux Python 3.13 on PR / main push / tag. The release workflow
+# (release.yml) is the gated artifact-publish path; this lane is the
+# PR-time smoke that the artifact builds cleanly and the wheel
+# installs.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: build
+    runs-on: kaos-x64-16core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install Python 3.13
+        run: uv python install 3.13
+
+      - name: Build wheel and sdist
+        run: uv build
+
+      - name: Verify metadata
+        run: uvx --from twine twine check --strict dist/*
+
+      - name: Smoke-test the built wheel in a clean venv
+        # Install the actually-built wheel (not the source tree) into a
+        # clean Python environment and exercise the public API. This
+        # catches packaging bugs that source-tree tests miss: missing
+        # data files, broken `__init__.py` exports, sdist-only files
+        # that reference dist-only paths, etc.
+        run: |
+          uv venv --python 3.13 /tmp/smoke
+          uv pip install --python /tmp/smoke/bin/python dist/kaos_citations-*-py3-none-any.whl
+          /tmp/smoke/bin/python -c "
+          import kaos_citations
+          assert kaos_citations.__version__, 'version missing from wheel'
+          # Public API surface that the wheel must expose.
+          from kaos_citations import (
+              CFRCitation,
+              CaseCitation,
+              Citation,
+              CitationParseError,
+              ConstitutionCitation,
+              DOICitation,
+              FederalRegisterCitation,
+              IFRSCitation,
+              KaosCitationsError,
+              KaosCitationsSettings,
+              SECFilingCitation,
+              StatuteCitation,
+              apply_postprocess,
+              assign_cite_ids,
+              extract_citations,
+              register_citations_resources,
+              register_citations_tools,
+          )
+          from kaos_citations.resources import CITATION_KINDS_URI, CitationKindsResource
+          # 1) Bulk extract — case + cfr + statute + const should all fire.
+          text = (
+              'See Brown v. Bd. of Educ., 347 U.S. 483 (1954); '
+              '17 CFR 240.10b-5; 42 U.S.C. § 1983; U.S. Const. amend. I.'
+          )
+          cites = extract_citations(text)
+          kinds = sorted({c.kind for c in cites})
+          assert {'case', 'cfr', 'statute', 'const'}.issubset(set(kinds)), kinds
+          # 2) Stable cite_id assignment.
+          assert all(c.cite_id.startswith('c') for c in cites)
+          # 3) Bluebook paren-chain: year goes to year, not to parenthetical.
+          one = extract_citations('Brown v. Bd. of Educ., 347 U.S. 483 (1954).')
+          assert len(one) == 1
+          assert one[0].year == 1954 and one[0].parenthetical is None
+          # 4) Kinds resource resolves to the documented 60-kind taxonomy.
+          import asyncio
+          data = asyncio.run(CitationKindsResource().read())
+          assert data['count'] == 60, data['count']
+          assert data['opt_in_kinds'] == ['arxiv']
+          print(
+              f'kaos-citations {kaos_citations.__version__}: '
+              f'bulk extract green, cite_ids assigned, paren-chain correct, '
+              f\"resource serves {data['count']} kinds\"
+          )
+          "
+          # Exercise the MCP server entry point (--help only; no stdio).
+          /tmp/smoke/bin/kaos-citations-serve --help
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7
