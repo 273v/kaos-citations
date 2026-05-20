@@ -77,9 +77,9 @@ imported at runtime.
 ## Install
 
 ```bash
-uv add kaos-citations
+uv add "kaos-citations>=0.1.0"
 # or
-pip install kaos-citations
+pip install "kaos-citations>=0.1.0"
 ```
 
 `kaos-citations` requires Python **3.13** or newer.
@@ -235,10 +235,20 @@ Or via the kaos-mcp manager: `kaos-mcp serve --module citations`.
 |---|---|
 | **Python** | 3.13, 3.14 (informational matrix entries for 3.14t free-threaded and 3.15-dev) |
 | **OS** | Linux, macOS, Windows (pure-Python wheel; no native code) |
-| **Maturity** | Alpha. The public API is documented in `kaos_citations.__all__` — the typed `Citation` discriminated union, `extract_citations`, the per-family `extract_*` functions, and the post-process passes. |
+| **Maturity** | 0.1.0 GA. The public API is documented in `kaos_citations.__all__` — the typed `Citation` discriminated union, `extract_citations`, the per-family `extract_*` functions, and the post-process passes. |
 | **Stability policy** | Pre-1.0: minor bumps may change behaviour. Every change is documented in [`CHANGELOG.md`](CHANGELOG.md). The MCP tool surface and the `KAOS_CITATIONS_*` environment-variable namespace are public API. |
 | **Test coverage** | 460+ unit + benchmark tests across the parsers, post-process passes, MCP tools, MCP resource, and corpus benchmarks. |
 | **Type checker** | Validated with [`ty`](https://docs.astral.sh/ty/), Astral's Python type checker. |
+
+## Documentation
+
+Per-package reference: [`docs/`](docs/) in this repo, especially
+[`docs/CITATION_TAXONOMY.md`](docs/CITATION_TAXONOMY.md).
+
+Cross-cutting KAOS guides (agentic patterns, persona presets, settings
+policy, citations, MCP data flow, migration to 0.1.0 GA) live in
+[`kaos-modules/docs/guides/`](https://github.com/273v/kaos-modules/tree/main/docs/guides)
+— see in particular [`citation-kinds.md`](https://github.com/273v/kaos-modules/blob/main/docs/guides/citation-kinds.md).
 
 ## Companion packages
 
