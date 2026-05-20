@@ -53,7 +53,7 @@ dependencies = [
   # MCP tool primitives (``KaosTool``, ``ToolResult``, ``ToolMetadata``,
   # ``ParameterSchema``). It transitively depends on pydantic + pydantic-
   # settings, so we don't redeclare those.
-  "kaos-core>=0.1.0rc1,<0.2",
+  "kaos-core>=0.1.0,<0.2",
   # kaos-nlp-core provides every matcher
   # (RegexMatcher / RegexSetMatcher / MultiPatternMatcher / FstSet),
   # the Punkt sentence tokenizer with the bundled legal model
@@ -61,7 +61,7 @@ dependencies = [
   # case-name parsing. All citation extraction in kaos-citations
   # routes through these primitives — no Python ``re`` module, no
   # third-party tokenizer.
-  "kaos-nlp-core>=0.1.0rc1,<0.2",
+  "kaos-nlp-core>=0.1.0,<0.2",
 ]
 
 [project.optional-dependencies]
