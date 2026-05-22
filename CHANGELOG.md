@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.1.0] — 2026-05-20
+
+### Changed — WU-L of 0.1.0 GA plan
+
+- 0.1.0 GA — WU-L of the 0.1.0 GA plan. First stable release of
+  `kaos-citations`. The public API is frozen for the 0.1.x line: no
+  breaking changes will land until 0.2.0. Runtime kaos-* pins raised
+  from `>=0.1.0rc1,<0.2` to `>=0.1.0,<0.2` for both `kaos-core` and
+  `kaos-nlp-core`. No source changes vs 0.1.0rc1.
+
+
 ## [0.1.0rc1] — 2026-05-20
 
 ### Changed
