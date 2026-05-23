@@ -22,6 +22,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   0.1.0 GA release (WU-L #543) that froze the public API for the
   0.1.x line. Closes audit-04/kaos-citations.md Family D (classifier drift).
 
+### Documentation
+
+- **audit-04 §23-C public-API surface.** README "Maturity" row no
+  longer says `kaos_citations.__all__` includes "the per-family
+  `extract_*` functions". The top-level facade exposes only the
+  dispatcher + 5 curated family extractors (the audit confirmed 6
+  total `extract_*` names on the top-level surface; 132 names
+  overall). The 59 additional per-family extractors live under
+  `kaos_citations.parsers.__all__` (66 names total) and are public,
+  but callers import them from the `parsers` subpackage. The prior
+  README wording would have made `from kaos_citations import
+  extract_sec_filing_citations` look like a stable contract — it
+  isn't and never was. No public-API behavior change; doc-only fix
+  closing audit-04/kaos-citations.md §23-C.
+
 ### Tests
 
 - Test `tests/unit/test_serve_install_contract.py` pins the install

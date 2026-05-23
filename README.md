@@ -235,7 +235,7 @@ Or via the kaos-mcp manager: `kaos-mcp serve --module citations`.
 |---|---|
 | **Python** | 3.13, 3.14 (informational matrix entries for 3.14t free-threaded and 3.15-dev) |
 | **OS** | Linux, macOS, Windows (pure-Python wheel; no native code) |
-| **Maturity** | 0.1.0 GA. The public API is documented in `kaos_citations.__all__` — the typed `Citation` discriminated union, `extract_citations`, the per-family `extract_*` functions, and the post-process passes. |
+| **Maturity** | 0.1.0 GA. The stable top-level API on `kaos_citations.__all__` (132 names total) is the typed `Citation` discriminated union, the dispatcher `extract_citations`, the five curated family extractors (`extract_case_citations`, `extract_case_short_forms`, `extract_cfr_citations`, `extract_journal_citations`, `extract_statute_citations`), the post-process passes, and the MCP registration helpers. The full per-family extractor surface — 59 additional `extract_*` functions — lives under `kaos_citations.parsers.__all__` (66 names total) and is also public; import from there for the long tail (`from kaos_citations.parsers import extract_sec_filing_citations`, etc.). |
 | **Stability policy** | Pre-1.0: minor bumps may change behaviour. Every change is documented in [`CHANGELOG.md`](CHANGELOG.md). The MCP tool surface and the `KAOS_CITATIONS_*` environment-variable namespace are public API. |
 | **Test coverage** | 460+ unit + benchmark tests across the parsers, post-process passes, MCP tools, MCP resource, and corpus benchmarks. |
 | **Type checker** | Validated with [`ty`](https://docs.astral.sh/ty/), Astral's Python type checker. |
