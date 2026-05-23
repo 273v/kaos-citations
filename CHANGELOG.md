@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Declared `[mcp]` optional-dependency (`kaos-mcp>=0.1.0,<0.2`). The
+  `kaos-citations-serve` console script and the README MCP-server
+  section already advertised this install path, but the extra itself
+  was not declared because `kaos-mcp` was not on PyPI when 0.1.0a1
+  shipped. Closes audit-04/kaos-citations.md F-001.
+- Test `tests/unit/test_serve_install_contract.py` pins the install
+  contract: `kaos-citations-serve` exits 1 with `[mcp]` and
+  `kaos-citations[mcp]` in stderr when `kaos-mcp` is unavailable.
+
 
 ## [0.1.0] — 2026-05-20
 

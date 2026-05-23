@@ -69,9 +69,12 @@ dependencies = [
 # courts_db JSON data ships in ``kaos_citations/data/`` under BSD-2
 # attribution (see ``kaos_citations/data/LICENSE.vendored``).
 legal = []
-# Note: the [mcp] extra (kaos-mcp>=0.1.0) is intentionally absent at
-# 0.1.0a1. kaos-mcp ships in Wave 3 and is not on PyPI yet; ``uv lock``
-# is strict and refuses unresolvable extras.
+# MCP server — required by the `kaos-citations-serve` console script
+# (see `kaos_citations.serve`). Install with
+# `pip install kaos-citations[mcp]` to run the citations MCP server.
+mcp = [
+  "kaos-mcp>=0.1.0,<0.2",
+]
 
 [dependency-groups]
 dev = [
