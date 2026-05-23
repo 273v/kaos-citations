@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   section already advertised this install path, but the extra itself
   was not declared because `kaos-mcp` was not on PyPI when 0.1.0a1
   shipped. Closes audit-04/kaos-citations.md F-001.
+
+### Changed
+
+- `pyproject.toml` classifier bumped from `Development Status :: 3 - Alpha`
+  to `Development Status :: 5 - Production/Stable` to reflect the
+  0.1.0 GA release (WU-L #543) that froze the public API for the
+  0.1.x line. Closes audit-04/kaos-citations.md Family D (classifier drift).
+
+### Tests
+
 - Test `tests/unit/test_serve_install_contract.py` pins the install
   contract: `kaos-citations-serve` exits 1 with `[mcp]` and
   `kaos-citations[mcp]` in stderr when `kaos-mcp` is unavailable.
