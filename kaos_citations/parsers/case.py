@@ -76,7 +76,7 @@ def _reporter_matcher_strict():  # type: ignore[no-untyped-def]
     """
     # Cast: ``sorted(..., key=len)`` confuses ty's inference back to
     # ``list[Sized]`` even though the source set is ``frozenset[str]``.
-    spellings = cast("list[str]", sorted(reporter_all_spellings(), key=len, reverse=True))
+    spellings = sorted(reporter_all_spellings(), key=len, reverse=True)
     return multi_pattern(spellings, longest_match=True)
 
 
@@ -96,7 +96,7 @@ def _reporter_matcher_lenient():  # type: ignore[no-untyped-def]
         key=len,
         reverse=True,
     )
-    return multi_pattern(cast("list[str]", spellings), longest_match=True, case_insensitive=True)
+    return multi_pattern(spellings, longest_match=True, case_insensitive=True)
 
 
 def _find_reporter_hits(text: str):  # type: ignore[no-untyped-def]
