@@ -30,7 +30,7 @@ class TestCitationBase:
     def test_cfr_frozen(self) -> None:
         cit = _make_cfr()
         with pytest.raises(ValidationError):
-            cit.raw = "other"  # type: ignore[misc]
+            cit.raw = "other"  # type: ignore[misc]  # ty: ignore[invalid-assignment]
 
     def test_kind_is_locked_to_literal(self) -> None:
         with pytest.raises(ValidationError):
