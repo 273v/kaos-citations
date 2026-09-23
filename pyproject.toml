@@ -73,7 +73,7 @@ legal = []
 # (see `kaos_citations.serve`). Install with
 # `pip install kaos-citations[mcp]` to run the citations MCP server.
 mcp = [
-  "kaos-mcp>=0.1.0,<0.2",
+  "kaos-mcp>=0.1.5,<0.2",
 ]
 
 [dependency-groups]
