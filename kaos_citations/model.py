@@ -1589,7 +1589,6 @@ __all__ = [
     "CourtDocumentCitation",
     "DOICitation",
     "ElectronicMediaCitation",
-    "ElectronicMediaCitation",
     "ElectronicMedium",
     "ExchangeRuleCitation",
     # Phase 1B
