@@ -37,7 +37,11 @@ from kaos_citations.model import (
 _PUB_LAW_PATTERN = (
     r"(?i)"
     r"\bPub(?:lic)?\.?\s*L(?:aw)?\.?\s*(?:No\.?\s*)?"
-    r"(?P<plnum>\d{1,3}-\d{1,4})"
+    # The U.S. Code's notes write the number with an en dash (U+2013): ``Pub. L. 114\u201394``.
+    r"(?P<plnum>\d{1,3}[-\x{2013}]\d{1,4})"
+    # A pinpoint may name the law's division and title first:
+    # ``Pub. L. 114-94, div. A, title VIII, §8001(b)``.
+    r"(?:\s*,\s*(?:div\.|division|title|subtitle)\s+[A-Z0-9]{1,6})*"
     r"(?:\s*,?\s*§\s*(?P<section>[\dA-Z\.\-()]{1,40}))?"
     # GPO source credits put the enactment date before the Statutes at Large:
     # ``Pub. L. 97-449, §1(b), Jan. 12, 1983, 96 Stat. 2414``.
@@ -74,7 +78,7 @@ def extract_public_law_citations(
     out: list[PublicLawCitation] = []
     for match in iter_public_law_matches(text):
         # groups: [whole, plnum, section, stat_vol, stat_pg]
-        plnum = match.groups[1] if len(match.groups) > 1 else ""
+        plnum = ((match.groups[1] if len(match.groups) > 1 else None) or "").replace("\u2013", "-")
         if not plnum:
             continue
         congress = _parse_int(plnum.split("-")[0])

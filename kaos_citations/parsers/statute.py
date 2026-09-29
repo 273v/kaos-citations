@@ -25,6 +25,7 @@ from kaos_citations.model import (
     FederalRegisterCitation,
     StatuteCitation,
 )
+from kaos_citations.parsers._lists import list_items
 
 # ---------------------------------------------------------------------------
 # U.S.C. and friends
@@ -99,6 +100,12 @@ def _fed_reg_matcher():  # type: ignore[no-untyped-def]
     return regex(_FED_REG_PATTERN)
 
 
+def _starts_code(rest: str) -> bool:
+    """Whether ``rest`` begins a code's name: the item before it is a title."""
+    compact = rest[:12].replace(" ", "").upper()
+    return compact.startswith(("U.S.C", "USC", "I.R.C", "IRC"))
+
+
 def _parse_int(s: str | None) -> int | None:
     if not s:
         return None
@@ -145,6 +152,22 @@ def extract_law_citations(
                 section=section,
             )
         )
+        # ``7 U.S.C. 61, 87e, 228``: each further section in the same title.
+        for start, end, item in list_items(text, m.end, _USC_SECTION, _starts_code):
+            if (start, end) in seen:
+                continue
+            seen.add((start, end))
+            results.append(
+                StatuteCitation(
+                    raw=text[start:end],
+                    normalized=f"{title} {code} § {item}",
+                    span=(start, end),
+                    source_uri=source_uri,
+                    title=title,
+                    code=code,
+                    section=item,
+                )
+            )
 
     # I.R.C. — Title 26 short form.
     for m in _irc_matcher().find_all(text):
