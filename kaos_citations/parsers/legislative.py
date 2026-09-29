@@ -39,6 +39,9 @@ _PUB_LAW_PATTERN = (
     r"\bPub(?:lic)?\.?\s*L(?:aw)?\.?\s*(?:No\.?\s*)?"
     r"(?P<plnum>\d{1,3}-\d{1,4})"
     r"(?:\s*,?\s*§\s*(?P<section>[\dA-Z\.\-()]{1,40}))?"
+    # GPO source credits put the enactment date before the Statutes at Large:
+    # ``Pub. L. 97-449, §1(b), Jan. 12, 1983, 96 Stat. 2414``.
+    r"(?:\s*,\s*[A-Z][a-z]{2,4}\.?\s+\d{1,2},\s+\d{4})?"
     r"(?:\s*,?\s*(?P<stat_vol>\d{1,4})\s*Stat\.?\s*(?P<stat_pg>[\d,]+))?"
 )
 
@@ -75,6 +78,11 @@ def extract_public_law_citations(
         if not plnum:
             continue
         congress = _parse_int(plnum.split("-")[0])
+        # A congress the model cannot hold is a misprint in the source
+        # ("Pub. L. 889-574" for 89-574 in 49 CFR 1.85): not a citation, and
+        # never an exception that loses every other citation in the text.
+        if congress is None or not 1 <= congress <= 200:
+            continue
         section = match.groups[2] if len(match.groups) > 2 else None
         stat_vol = _parse_int(match.groups[3] if len(match.groups) > 3 else None)
         stat_pg = _parse_int(match.groups[4] if len(match.groups) > 4 else None)

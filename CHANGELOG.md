@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] — 2026-09-29
+
+### Added
+
+- **GPO house style.** The forms the Code of Federal Regulations, the U.S.
+  Code's own notes and GovInfo print, without the Bluebook's section sign:
+  `5 U.S.C. 301`, `7 U.S.C. 281-286`, `42 U.S.C. 300v-1(b)` (a
+  `StatuteCitation`, normalized with `§`), and `81 FR 19819` (a
+  `FederalRegisterCitation`; upper-case `FR` only). A public law's
+  Statutes at Large are read after its enactment date, as source credits
+  write them: `Pub. L. 97-449, §1(b), Jan. 12, 1983, 96 Stat. 2414`.
+  Measured on the 2025 edition of 49 CFR: 579 of 582 U.S. Code citations in
+  its Authority lines are found (none were before).
+
+### Fixed
+
+- **A misprinted public law no longer raises.** A congress the model cannot
+  hold (`Pub. L. 889-574`, a misprint in 49 CFR 1.85) raised a
+  `ValidationError` that lost every other citation in the text; the match
+  is now skipped.
+
 ## [0.1.3] — 2026-09-23
 
 ### Fixed
