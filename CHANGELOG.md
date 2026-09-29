@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] — 2026-09-29
+
+### Added
+
+- **Section lists.** `7 U.S.C. 61, 87e, 228` and `7 CFR 2.35, 2.41`: each
+  further section is a citation of its own, in the same title, with its own
+  span. A list stops where an item is the next citation's title
+  (`42 U.S.C. 1983, 28 U.S.C. 1331`) or where words follow the comma.
+- **Public laws as the U.S. Code's notes write them**: an en dash in the
+  number (`Pub. L. 114–94`, normalized to `114-94`) and a pinpoint through
+  the law's division and title (`div. A, title VIII, §8001(b)`).
+
 ## [0.1.4] — 2026-09-29
 
 ### Added

@@ -17,6 +17,7 @@ from functools import lru_cache
 
 from kaos_citations.matchers import RegexMatchSpan, regex
 from kaos_citations.model import CFRCitation
+from kaos_citations.parsers._lists import list_items
 
 # Section grammar:
 #   base   = digits(.digits)*(suffix)?     e.g. 240.10b-5 or 1.165-7
@@ -80,7 +81,24 @@ def extract_cfr_citations(
                 section=section,
             )
         )
+        # ``7 CFR 2.35, 2.41``: each further section in the same title.
+        for start, end, item in list_items(text, match.end, _SECTION_PATTERN, _starts_cfr):
+            results.append(
+                CFRCitation(
+                    raw=text[start:end],
+                    normalized=f"{title} CFR {item}",
+                    span=(start, end),
+                    source_uri=source_uri,
+                    title=title,
+                    section=item,
+                )
+            )
     return results
+
+
+def _starts_cfr(rest: str) -> bool:
+    """Whether ``rest`` begins ``CFR``: the item before it is a title."""
+    return rest[:8].replace(" ", "").replace(".", "").upper().startswith("CFR")
 
 
 __all__ = ["extract_cfr_citations", "iter_cfr_matches"]

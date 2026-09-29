@@ -12,6 +12,7 @@ import pytest
 
 from kaos_citations.extract import extract_citations
 from kaos_citations.model import (
+    CFRCitation,
     FederalRegisterCitation,
     PublicLawCitation,
     StatuteCitation,
@@ -95,3 +96,40 @@ class TestMisprintedPublicLaw:
         text = "(Pub. L. 889-574, 80 Stat. 766); and Pub. L. 89-670"
         laws = _of(PublicLawCitation, text)
         assert [c.public_law_number for c in laws] == ["89-670"]
+
+
+@pytest.mark.unit
+class TestSectionLists:
+    def test_usc_list_items_are_citations_in_the_same_title(self) -> None:
+        text = "5 U.S.C. 301; 7 U.S.C. 61, 87e, 228, 499o, 608c(9), 1622(g)."
+        cites = _of(StatuteCitation, text)
+        assert [(c.title, c.section) for c in cites] == [
+            ("5", "301"),
+            ("7", "61"),
+            ("7", "87e"),
+            ("7", "228"),
+            ("7", "499o"),
+            ("7", "608c(9)"),
+            ("7", "1622(g)"),
+        ]
+        assert [text[c.span[0] : c.span[1]] for c in cites][2:4] == ["87e", "228"]
+
+    def test_a_list_stops_at_the_next_citations_title(self) -> None:
+        cites = _of(StatuteCitation, "42 U.S.C. 1983, 28 U.S.C. 1331")
+        assert [(c.title, c.section) for c in cites] == [("42", "1983"), ("28", "1331")]
+
+    def test_cfr_list(self) -> None:
+        cites = _of(CFRCitation, "Authority: 7 CFR 2.35, 2.41.")
+        assert [(c.title, c.section) for c in cites] == [(7, "2.35"), (7, "2.41")]
+
+    def test_a_comma_followed_by_words_is_not_a_list(self) -> None:
+        cites = _of(StatuteCitation, "7 U.S.C. 166, as amended, and the Act")
+        assert [c.section for c in cites] == ["166"]
+
+
+@pytest.mark.unit
+class TestPublicLawAsTheCodesNotesWriteIt:
+    def test_en_dash_and_a_pinpoint_through_division_and_title(self) -> None:
+        text = "2015\u2014Pub. L. 114\u201394, div. A, title VIII, \u00a78001(b), Dec. 4, 2015"
+        [c] = _of(PublicLawCitation, text)
+        assert (c.public_law_number, c.congress, c.section) == ("114-94", 114, "8001(b)")
