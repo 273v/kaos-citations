@@ -425,6 +425,12 @@ def _find_anchors(text: str) -> list[_Anchor]:
         if vol_info is None:
             continue
         volume, vol_start = vol_info
+        # No reporter has a volume 0 ("... WITHIN A TEMPERATURE RANGE OF 0 TO
+        # 300 DEGREES C" in a tariff table, 15 CFR part 746, supp. 4): not a
+        # citation, and never an exception that loses every other citation
+        # in the text.
+        if volume < 1:
+            continue
 
         page_info = _find_page_after(text, rep_end)
         if page_info is None:

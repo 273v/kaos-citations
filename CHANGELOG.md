@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] — 2026-09-29
+
+### Fixed
+
+- A number 0 before a reporter-like word ("... WITHIN A TEMPERATURE RANGE OF
+  0 TO 300 DEGREES C" in a tariff table of the Export Administration
+  Regulations, 15 CFR part 746, supp. 4) was taken as volume 0 of a case or
+  journal citation and raised a `ValidationError` (`volume` must be at
+  least 1), losing every other citation in the text. No reporter has a
+  volume 0: such an anchor is skipped, as a misprinted public law is.
+
 ## [0.1.6] — 2026-09-29
 
 ### Added
