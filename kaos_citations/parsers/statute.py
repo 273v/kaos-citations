@@ -32,6 +32,9 @@ from kaos_citations.model import (
 
 # ``42 U.S.C. § 1983``, ``42 U.S.C.A. § 1983 (West 2024)``, ``42 U.S.C.S. § 1983``,
 # ``15 U.S.C. § 78j(b)``, ``17 U.S.C. §§ 101-105``, ``26 U.S.C. § 501(c)(3)``.
+# GPO house style omits the section sign: ``5 U.S.C. 301``, ``7 U.S.C. 281-286``
+# (the Code of Federal Regulations' Authority lines, the Code's own notes); the
+# section must then start with a digit, which the section pattern requires.
 _USC_SECTION = (
     r"[0-9]+(?:\.[0-9]+)*"
     r"(?:[-A-Za-z][A-Za-z0-9-]*)?"
@@ -42,7 +45,7 @@ _USC_PATTERN = (
     r"(?i)"
     r"\b(?P<title>[1-9][0-9]?)\s+"
     r"(?P<code>U\.?\s*S\.?\s*C\.?(?:\s*A\.?|\s*S\.?)?)\s*"
-    r"(?:§§?\s*|sec(?:tion)?s?\.?\s+)"
+    r"(?:§§?\s*|sec(?:tion)?s?\.?\s+)?"
     r"(?P<section>" + _USC_SECTION + r")"
 )
 
@@ -54,10 +57,11 @@ _IRC_PATTERN = (
     r"(?P<section>" + _USC_SECTION + r")"
 )
 
-# Federal Register: ``88 Fed. Reg. 12,345 (Mar. 1, 2023)``
+# Federal Register: ``88 Fed. Reg. 12,345 (Mar. 1, 2023)``; GPO house style
+# writes ``81 FR 19819`` (upper case only: "fr" in running text is not it).
 _FED_REG_PATTERN = (
     r"(?i)"
-    r"\b(?P<volume>\d{1,4})\s+Fed\.?\s*Reg\.?\s+"
+    r"\b(?P<volume>\d{1,4})\s+(?:Fed\.?\s*Reg\.?|(?-i:FR))\s+"
     r"(?P<page>\d{1,3}(?:,\d{3})+|\d{1,6})"
     r"(?:\s*\(\s*(?P<date>[A-Za-z\.]+\s+\d{1,2},?\s+\d{4})\s*\))?"
 )
