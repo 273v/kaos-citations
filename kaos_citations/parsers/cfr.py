@@ -32,12 +32,21 @@ _SECTION_PATTERN = (
     r"(?:\([A-Za-z0-9]+\)){0,8}"
 )
 
+# A further item of a plural list: ``parts 15 and 1520``, ``parts 1220 through 1299``.
+_PARTS_TAIL = r"\s*(?:,\s*)?(?:and|through|to|or)\s+(?P<item>[0-9]+)"
+
 _CFR_PATTERN = (
     r"\b(?P<title>[1-9][0-9]?)\s*"
     r"(?:C\.?\s*F\.?\s*R\.?|CFR)\s*"
-    r"(?:Part\s+|part\s+|§\s*)?"
+    # ``40 CFR parts 86 and 600``: the plural introduces a list (read below).
+    r"(?:[Pp]arts?\s+|§§?\s*)?"
     r"(?P<section>" + _SECTION_PATTERN + r")"
 )
+
+
+@lru_cache(maxsize=1)
+def _parts_tail():  # type: ignore[no-untyped-def]
+    return regex(_PARTS_TAIL)
 
 
 @lru_cache(maxsize=1)
@@ -81,6 +90,24 @@ def extract_cfr_citations(
                 section=section,
             )
         )
+        # ``40 CFR parts 86 and 600``: the plural's further part.
+        if "part" in raw.lower():
+            for m in _parts_tail().find_all(text[match.end : match.end + 40]):
+                if m.start != 0:
+                    break
+                item = m.groups[1] or ""
+                start = match.end + m.end - len(item)
+                results.append(
+                    CFRCitation(
+                        raw=item,
+                        normalized=f"{title} CFR {item}",
+                        span=(start, match.end + m.end),
+                        source_uri=source_uri,
+                        title=title,
+                        section=item,
+                    )
+                )
+                break
         # ``7 CFR 2.35, 2.41``: each further section in the same title.
         for start, end, item in list_items(text, match.end, _SECTION_PATTERN, _starts_cfr):
             results.append(
