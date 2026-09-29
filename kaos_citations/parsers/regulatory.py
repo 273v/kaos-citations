@@ -287,7 +287,8 @@ _EO_PROC_NUMBER = r"\d{1,3},\d{3}|\d{4,6}|\d{1,3}"
 
 _EXEC_ORDER_PATTERN = (
     r"(?i)"
-    r"\b(?:Exec(?:utive)?\.?\s*Order|E\.?O\.?)"
+    # ``Ex. Ord. No. 13330``: the U.S. Code's notes.
+    r"\b(?:Exec(?:utive)?\.?\s*Order|Ex\.\s*Ord\.?|E\.?O\.?)"
     r"\s*(?:No\.?|Number|\#)?\s*"
     r"(?P<num>" + _EO_PROC_NUMBER + r")"
 )

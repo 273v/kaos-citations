@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] — 2026-09-29
+
+### Added
+
+- **The U.S. Code notes' forms**: executive orders as `Ex. Ord. No. 13330`,
+  and the Federal Register as `69 F.R. 9185` (dotted, upper case).
+- **Plural CFR parts**: `49 CFR parts 15 and 1520` yields both parts;
+  `parts 1220 through 1299` yields the range's two ends (the model has no
+  range field).
+
+Measured on title 49 of the 2024 U.S. Code and 2025 CFR (137,303 texts),
+these were the remaining uncovered forms: Federal Register 19%, executive
+orders 13%, CFR 8% of occurrences.
+
 ## [0.1.5] — 2026-09-29
 
 ### Added

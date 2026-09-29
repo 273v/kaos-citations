@@ -13,6 +13,7 @@ import pytest
 from kaos_citations.extract import extract_citations
 from kaos_citations.model import (
     CFRCitation,
+    ExecutiveActionCitation,
     FederalRegisterCitation,
     PublicLawCitation,
     StatuteCitation,
@@ -133,3 +134,23 @@ class TestPublicLawAsTheCodesNotesWriteIt:
         text = "2015\u2014Pub. L. 114\u201394, div. A, title VIII, \u00a78001(b), Dec. 4, 2015"
         [c] = _of(PublicLawCitation, text)
         assert (c.public_law_number, c.congress, c.section) == ("114-94", 114, "8001(b)")
+
+
+@pytest.mark.unit
+class TestTheCodesNotesForms:
+    def test_ex_ord_and_dotted_fr(self) -> None:
+        text = "Ex. Ord. No. 13330, Feb. 24, 2004, 69 F.R. 9185, provided:"
+        [eo] = _of(ExecutiveActionCitation, text)
+        assert eo.number == "13330"
+        [fr] = _of(FederalRegisterCitation, text)
+        assert (fr.volume, fr.page) == (69, 9185)
+
+    def test_plural_cfr_parts(self) -> None:
+        cites = _of(CFRCitation, "controlled under 49 CFR parts 15 and 1520. No part")
+        assert [(c.title, c.section) for c in cites] == [(49, "15"), (49, "1520")]
+        # "through" gives the range's two ends; the model has no range field.
+        cites = _of(CFRCitation, "(36 CFR parts 1220 through 1299; 44 U.S.C. 3301)")
+        assert [c.section for c in cites] == ["1220", "1299"]
+
+    def test_cfr_in_prose_is_not_a_citation(self) -> None:
+        assert _of(CFRCitation, "see the List of CFR Sections Affected") == []

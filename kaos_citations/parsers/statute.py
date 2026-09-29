@@ -59,10 +59,11 @@ _IRC_PATTERN = (
 )
 
 # Federal Register: ``88 Fed. Reg. 12,345 (Mar. 1, 2023)``; GPO house style
-# writes ``81 FR 19819`` (upper case only: "fr" in running text is not it).
+# writes ``81 FR 19819`` and the U.S. Code's notes ``69 F.R. 9185`` (upper case
+# only: "fr" in running text is not it).
 _FED_REG_PATTERN = (
     r"(?i)"
-    r"\b(?P<volume>\d{1,4})\s+(?:Fed\.?\s*Reg\.?|(?-i:FR))\s+"
+    r"\b(?P<volume>\d{1,4})\s+(?:Fed\.?\s*Reg\.?|(?-i:F\.\s?R\.|FR))\s+"
     r"(?P<page>\d{1,3}(?:,\d{3})+|\d{1,6})"
     r"(?:\s*\(\s*(?P<date>[A-Za-z\.]+\s+\d{1,2},?\s+\d{4})\s*\))?"
 )
