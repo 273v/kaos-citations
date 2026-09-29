@@ -154,3 +154,16 @@ class TestTheCodesNotesForms:
 
     def test_cfr_in_prose_is_not_a_citation(self) -> None:
         assert _of(CFRCitation, "see the List of CFR Sections Affected") == []
+
+
+def test_a_volume_zero_is_not_a_citation() -> None:
+    # A tariff table in the Export Administration Regulations (15 CFR part
+    # 746, supp. 4): "0 TO 300" read as volume 0 of a reporter raised a
+    # validation error and lost every citation in the text.
+    text = (
+        "COEFFICIENT OF EXPANSION NOT OVER 5X10-6 PER KELVIN WITHIN A TEMPERATURE "
+        "RANGE OF 0 TO 300 DEGREES C, UNWORKED. See 15 CFR 746.5."
+    )
+    found = extract_citations(text)
+    assert all(getattr(c, "volume", 1) != 0 for c in found)
+    assert any(c.kind == "cfr" for c in found)
