@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] — 2026-11-13
+
+### Fixed
+
+- **South Carolina Reports were read as the Supreme Court Reporter.**
+  reporters_db lists `S.C.` as a variation of `S. Ct.`, and the reporter
+  normalizer looked variations up before canonical spellings, so
+  `291 S.C. 4` became `291 S. Ct. 4` with court `scotus`. A spelling that
+  is itself a canonical reporter now keeps its own reporter. The same
+  ordering also fixes `B.R.` (Bankruptcy Reporter, was `Balt. C. Rep.`),
+  `Wash.` (was `Wash. Terr.`), `Me.` (was `ME`), `Okla.` (was
+  `Okla. Crim.`) and the other canonical spellings that reporters_db also
+  lists as another reporter's variation.
+- `291 S. C. 4` (with a space) is now recognised as South Carolina
+  Reports.
+
 ## [0.1.7] — 2026-09-29
 
 ### Fixed

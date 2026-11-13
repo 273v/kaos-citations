@@ -153,7 +153,18 @@ def reporter_variations() -> dict[str, str]:
         for e in entries:
             for variant, canonical in e.variations:
                 out[variant] = canonical
+    for variant, canonical in _LOCAL_REPORTER_VARIATIONS.items():
+        out.setdefault(variant, canonical)
     return out
+
+
+# Spellings missing from the vendored reporters_db, kept here rather
+# than in the vendored JSON so that file stays a verbatim copy. A
+# vendored variation of the same string wins (``setdefault``).
+_LOCAL_REPORTER_VARIATIONS: dict[str, str] = {
+    # South Carolina Reports with a space, as in ``291 S. C. 4``.
+    "S. C.": "S.C.",
+}
 
 
 @lru_cache(maxsize=1)

@@ -447,3 +447,70 @@ class TestOCRDegradedReporterMatching:
         assert cites[0].reporter == "U.S."
         assert cites[0].volume == 100
         assert cites[0].page == 200
+
+
+def _cases(text: str) -> list[tuple[int | None, str | None, int | None, str | None]]:
+    return [
+        (c.volume, c.reporter, c.page, c.court)
+        for c in extract_citations(text)
+        if isinstance(c, CaseCitation)
+    ]
+
+
+@pytest.mark.unit
+class TestCanonicalReporterBeatsVariation:
+    """reporters_db lists ``S.C.`` as a variation of ``S. Ct.`` and
+    ``B.R.`` as one of ``Balt. C. Rep.``. A spelling that is itself a
+    canonical reporter must keep its own reporter (DI-593: South
+    Carolina Reports were rewritten to the Supreme Court Reporter and
+    tagged SCOTUS)."""
+
+    def test_south_carolina_reports_with_parallel_cite(self) -> None:
+        cites = _cases("Smith v. Jones, 291 S.C. 4, 351 S.E.2d 1 (1986)")
+        assert cites == [(291, "S.C.", 4, None), (351, "S.E.2d", 1, None)]
+
+    @pytest.mark.parametrize("text", ["291 S.C. 4", "291 S. C. 4"])
+    def test_south_carolina_spellings(self, text: str) -> None:
+        cites = [c for c in extract_citations(text) if isinstance(c, CaseCitation)]
+        assert [(c.reporter, c.normalized, c.court) for c in cites] == [
+            ("S.C.", "291 S.C. 4", None)
+        ]
+
+    def test_south_carolina_is_not_scotus(self) -> None:
+        from kaos_citations.parsers.case import _normalize_reporter, _scotus_court_default
+
+        assert _normalize_reporter("S.C.") == "S.C."
+        assert _scotus_court_default("S.C.") is None
+
+    def test_scotus_parallel_cite_unchanged(self) -> None:
+        cites = _cases("Roe v. Wade, 410 U.S. 113, 93 S. Ct. 705 (1973)")
+        assert cites == [(410, "U.S.", 113, "scotus"), (93, "S. Ct.", 705, "scotus")]
+
+    @pytest.mark.parametrize("text", ["93 S. Ct. 705", "93 S.Ct. 705", "93 S Ct 705"])
+    def test_supreme_court_reporter_spellings(self, text: str) -> None:
+        assert _cases(text) == [(93, "S. Ct.", 705, "scotus")]
+
+    @pytest.mark.parametrize(
+        ("text", "reporter"),
+        [
+            ("5 S.E. 7", "S.E."),
+            ("5 S. E. 7", "S.E."),
+            ("351 S.E.2d 1", "S.E.2d"),
+            ("12 S.C.L. 5", "S.C.L."),
+            ("5 So. 7", "So."),
+            ("5 So. 2d 7", "So. 2d"),
+            ("123 B.R. 456", "B.R."),
+            ("5 Wash. 7", "Wash."),
+            ("5 Me. 7", "Me."),
+            ("5 Okla. 7", "Okla."),
+        ],
+    )
+    def test_neighbouring_reporters(self, text: str, reporter: str) -> None:
+        cites = _cases(text)
+        assert len(cites) == 1
+        assert cites[0][1] == reporter
+        assert cites[0][3] != "scotus"
+
+    def test_a_variation_still_normalises(self) -> None:
+        # "S.Car." is only a variation (of South Carolina Reports).
+        assert _cases("291 S.Car. 4")[0][1] == "S.C."
