@@ -167,16 +167,22 @@ def _normalize_reporter(spelling: str) -> str:
     """Map a matched spelling to its canonical Bluebook form.
 
     Order:
-      1. Direct ``reporter_variations`` lookup (variant → canonical).
-      2. Identity if the spelling is already canonical.
+      1. Identity if the spelling is already canonical.
+      2. Direct ``reporter_variations`` lookup (variant → canonical).
       3. Case-folded fallback for OCR-degraded forms (``Fed. cl.`` →
          ``Fed. Cl.``).
+
+    A canonical spelling wins over another reporter's variation of the
+    same string. reporters_db lists ``S.C.`` (South Carolina Reports)
+    as a variation of ``S. Ct.``, and ``B.R.`` (Bankruptcy Reporter) as
+    one of ``Balt. C. Rep.``; looking the variation up first rewrote
+    ``291 S.C. 4`` to ``291 S. Ct. 4`` and tagged it SCOTUS.
     """
+    if spelling in reporter_canonical_set():
+        return spelling
     direct = reporter_variations().get(spelling)
     if direct is not None:
         return direct
-    if spelling in reporter_canonical_set():
-        return spelling
     return _reporter_canonical_lookup().get(spelling.lower(), spelling)
 
 
